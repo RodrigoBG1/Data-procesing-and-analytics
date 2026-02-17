@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Business Analytics Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body { 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f7fa;
+      min-height: 100vh;
+    }
+    
+    .topbar {
+      background: #1a3a52;
+      color: white;
+      padding: 20px 40px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .topbar h1 { font-size: 24px; font-weight: 600; margin: 0; }
+    .topbar p { margin-top: 5px; opacity: 0.9; font-size: 14px; }
+    
+    .container { max-width: 1600px; margin: 0 auto; padding: 30px 40px; }
+    
+    .main-grid {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 30px;
+      margin-bottom: 30px;
+    }
+    
+    .sidebar {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      padding: 25px;
+      height: fit-content;
+    }
+    
+    .sidebar h2 {
+      color: #1a3a52;
+      font-size: 18px;
+      margin-bottom: 20px;
+      font-weight: 600;
+      border-bottom: 2px solid #1a3a52;
+      padding-bottom: 10px;
+    }
+    
+    .query-section {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      padding: 30px;
+    }
+    
+    .query-section h2 {
+      color: #1a3a52;
+      font-size: 18px;
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+    
+    label {
+      display: block;
+      color: #2c5f7f;
+      font-weight: 500;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    
+    textarea { 
+      width: 100%;
+      padding: 15px; 
+      border: 1px solid #d1dce6;
+      border-radius: 6px; 
+      font-size: 15px;
+      font-family: inherit;
+      resize: vertical;
+      min-height: 100px;
+      transition: border-color 0.3s, box-shadow 0.3s;
+      margin-bottom: 15px;
+    }
+    
+    textarea:focus { 
+      outline: none; 
+      border-color: #1a3a52; 
+      box-shadow: 0 0 0 3px rgba(26, 58, 82, 0.1);
+    }
+    
+    .btn-primary { 
+      width: 100%;
+      padding: 14px 30px; 
+      background: #1a3a52; 
+      color: white; 
+      border: none; 
+      border-radius: 6px; 
+      cursor: pointer; 
+      font-weight: 600;
+      font-size: 15px;
+      transition: background 0.3s;
+    }
+    
+    .btn-primary:hover { background: #2c5f7f; }
+    .btn-primary:disabled { background: #a0aec0; cursor: not-allowed; }
+    
+    .btn-secondary {
+      width: 100%;
+      padding: 12px 20px;
+      background: white;
+      color: #1a3a52;
+      border: 1px solid #d1dce6;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 14px;
+      margin-bottom: 10px;
+      transition: all 0.3s;
+      text-align: left;
+    }
+    
+    .btn-secondary:hover {
+      background: #f7f9fc;
+      border-color: #1a3a52;
+    }
+    
+    .btn-icon {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .btn-icon svg {
+      width: 18px;
+      height: 18px;
+    }
+    
+    .icon {
+      display: inline-block;
+      vertical-align: middle;
+    }
+    
+    .icon-sm {
+      width: 16px;
+      height: 16px;
+    }
+    
+    .icon-md {
+      width: 20px;
+      height: 20px;
+    }
+    
+    .icon-lg {
+      width: 24px;
+      height: 24px;
+    }
+    
+    .chart-container { 
+      background: white; 
+      padding: 30px; 
+      border-radius: 8px; 
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+      min-height: 500px;
+    }
+    
+    .chart-container h3 {
+      color: #1a3a52;
+      font-size: 18px;
+      margin-bottom: 25px;
+      font-weight: 600;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 10px;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+      color: #718096;
+    }
+    
+    .empty-state h3 {
+      color: #4a5568;
+      margin-bottom: 10px;
+      font-size: 20px;
+    }
+    
+    .loading { 
+      text-align: center; 
+      padding: 60px 20px; 
+      color: #4a5568; 
+    }
+    
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #e2e8f0;
+      border-top-color: #1a3a52;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 15px;
+    }
+    
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    .error { 
+      background: #fff5f5; 
+      color: #c53030; 
+      padding: 15px 20px; 
+      border-radius: 6px; 
+      margin-bottom: 20px;
+      border-left: 4px solid #fc8181;
+    }
+    
+    .sql-preview { 
+      background: #1e293b; 
+      color: #94a3b8; 
+      padding: 20px; 
+      border-radius: 6px; 
+      margin: 20px 0;
+      font-family: 'Courier New', monospace; 
+      font-size: 13px;
+      overflow-x: auto;
+      line-height: 1.6;
+    }
+    
+    .stats-grid { 
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin: 20px 0;
+    }
+    
+    .stat-card {
+      background: #f7f9fc;
+      padding: 20px;
+      border-radius: 6px;
+      border-left: 4px solid #1a3a52;
+    }
+    
+    .stat-value { 
+      font-size: 32px; 
+      font-weight: 700; 
+      color: #1a3a52; 
+    }
+    
+    .stat-label { 
+      color: #64748b; 
+      font-size: 13px;
+      font-weight: 500;
+      text-transform: uppercase;
+      margin-top: 5px;
+    }
+    
+    .data-table {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      padding: 30px;
+      overflow-x: auto;
+      margin-bottom: 30px;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    
+    thead { background: #f7f9fc; }
+    
+    th {
+      padding: 14px 16px;
+      text-align: left;
+      font-weight: 600;
+      color: #1a3a52;
+      font-size: 13px;
+      text-transform: uppercase;
+      border-bottom: 2px solid #e2e8f0;
+      white-space: nowrap;
+    }
+    
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #f1f5f9;
+      color: #475569;
+    }
+    
+    tbody tr:nth-child(even) {
+      background: #fafbfc;
+    }
+    
+    tr:hover { background: #f0f4f8; }
+    
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <h1>
+      <i data-lucide="bar-chart-3" style="display: inline-block; vertical-align: middle; margin-right: 10px; width: 28px; height: 28px;"></i>
+      Business Analytics Dashboard
+    </h1>
+    <p>AI-Powered Data Analysis with Natural Language Processing</p>
+  </div>
+  
+  <div class="container">
+    <div class="main-grid">
+      <div class="sidebar">
+        <h2>Quick Insights</h2>
+        <button class="btn-secondary btn-icon" onclick="loadInsight('daily')">
+          <i data-lucide="trending-up" class="icon-sm"></i>
+          Daily Trends
+        </button>
+        <button class="btn-secondary btn-icon" onclick="loadInsight('merchants')">
+          <i data-lucide="store" class="icon-sm"></i>
+          Top Merchants
+        </button>
+        <button class="btn-secondary btn-icon" onclick="loadInsight('cards')">
+          <i data-lucide="credit-card" class="icon-sm"></i>
+          Card Analysis
+        </button>
+        <button class="btn-secondary btn-icon" onclick="loadInsight('errors')">
+          <i data-lucide="alert-triangle" class="icon-sm"></i>
+          Error Analysis
+        </button>
+      </div>
+
+      <div class="query-section">
+        <h2>Ask a Question</h2>
+        <label for="question">Enter your query in natural language</label>
+        <textarea 
+          id="question" 
+          placeholder="Example: Show me total transactions by merchant category for the last month"
+        ></textarea>
+        <button class="btn-primary btn-icon" id="queryBtn" onclick="handleQuery()">
+          <i data-lucide="search" class="icon-sm"></i>
+          <span>Analyze Data</span>
+        </button>
+      </div>
+    </div>
+
+    <div id="error-container"></div>
+    
+    <div id="empty-state" class="chart-container">
+      <div class="empty-state">
+        <i data-lucide="bar-chart-2" style="width: 80px; height: 80px; color: #cbd5e0; margin-bottom: 20px;"></i>
+        <h3>No Data to Display</h3>
+        <p>Enter a query above or select a quick insight to view analytics</p>
+      </div>
+    </div>
+
+    <div id="results-container"></div>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:3000';
+    let currentChart = null;
+
+    async function handleQuery() {
+      const question = document.getElementById('question').value.trim();
+      if (!question) {
+        showError('Please enter a question');
+        return;
+      }
+
+      showLoading();
+      hideError();
+      hideEmpty();
+
+      try {
+        const res = await fetch(`${API_URL}/api/query`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question })
+        });
+
+        const data = await res.json();
+        
+        if (res.ok) {
+          displayResults(data);
+        } else {
+          showError(data.error || 'Unknown error occurred');
+        }
+      } catch (err) {
+        showError('Cannot connect to server. Ensure backend is running on port 3000.');
+        console.error(err);
+      } finally {
+        hideLoading();
+      }
+    }
+
+    async function loadInsight(type) {
+      showLoading();
+      hideError();
+      hideEmpty();
+
+      try {
+        const res = await fetch(`${API_URL}/api/insights/${type}`);
+        const data = await res.json();
+
+        if (res.ok && data.data && data.data.length > 0) {
+          const titles = {
+            daily: 'Daily Transaction Trends',
+            merchants: 'Top Merchants by Revenue',
+            cards: 'Card Usage Analysis',
+            errors: 'Transaction Errors Analysis'
+          };
+
+          const keys = Object.keys(data.data[0]);
+          displayResults({
+            data: data.data,
+            query: `Predefined ${type} query`,
+            rowCount: data.data.length,
+            chartConfig: {
+              chartType: type === 'daily' ? 'line' : 'bar',
+              dataKey: keys[0],
+              valueKeys: keys.slice(1),
+              title: titles[type]
+            }
+          });
+        } else {
+          showError('No data available for this insight. Check if database has data.');
+        }
+      } catch (err) {
+        showError('Cannot connect to server. Ensure backend is running.');
+        console.error(err);
+      } finally {
+        hideLoading();
+      }
+    }
+
+    function displayResults(data) {
+      const container = document.getElementById('results-container');
+      
+      let html = `
+        <div class="query-section">
+          <h2>SQL Query Generated</h2>
+          <div class="sql-preview">${escapeHtml(data.query)}</div>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-value">
+                <i data-lucide="layers" class="icon-md" style="vertical-align: middle; margin-right: 8px; color: #1a3a52;"></i>
+                ${data.rowCount}
+              </div>
+              <div class="stat-label">Rows Returned</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">
+                <i data-lucide="columns" class="icon-md" style="vertical-align: middle; margin-right: 8px; color: #1a3a52;"></i>
+                ${data.data[0] ? Object.keys(data.data[0]).length : 0}
+              </div>
+              <div class="stat-label">Columns</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-container">
+          <h3>${data.chartConfig.title}</h3>
+          <canvas id="myChart" style="max-height: 450px;"></canvas>
+        </div>
+
+        <div class="data-table">
+          <h3>Data Preview (First 15 Rows of ${data.data.length})</h3>
+          <table>
+            <thead>
+              <tr>
+                ${Object.keys(data.data[0] || {}).map(key => `<th>${formatLabel(key)}</th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${data.data.slice(0, 15).map((row, idx) => `
+                <tr>
+                  ${Object.values(row).map(val => {
+                    if (val === null || val === undefined) return '<td>-</td>';
+                    
+                    // Formatear números
+                    if (typeof val === 'number') {
+                      return `<td style="text-align: right; font-family: monospace;">${formatNumber(val)}</td>`;
+                    }
+                    
+                    // Truncar texto largo
+                    const strVal = String(val);
+                    const displayVal = strVal.length > 50 ? strVal.substring(0, 47) + '...' : strVal;
+                    return `<td>${escapeHtml(displayVal)}</td>`;
+                  }).join('')}
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          ${data.data.length > 15 ? `
+            <div style="text-align: center; padding: 15px; color: #64748b; font-size: 13px;">
+              <i data-lucide="file-text" class="icon-sm" style="vertical-align: middle; margin-right: 6px;"></i>
+              Showing 15 of ${data.data.length} rows
+            </div>
+          ` : ''}
+        </div>
+      `;
+
+      container.innerHTML = html;
+      lucide.createIcons(); // Reinicializar iconos después de insertar HTML
+      renderChart(data);
+    }
+
+    function renderChart(data) {
+      const canvas = document.getElementById('myChart');
+      if (!canvas) return;
+
+      if (currentChart) {
+        currentChart.destroy();
+      }
+
+      const ctx = canvas.getContext('2d');
+      const config = data.chartConfig;
+      
+      // Colores profesionales en azul marino
+      const colors = [
+        { bg: 'rgba(26, 58, 82, 0.8)', border: 'rgba(26, 58, 82, 1)' },
+        { bg: 'rgba(44, 95, 127, 0.8)', border: 'rgba(44, 95, 127, 1)' },
+        { bg: 'rgba(61, 123, 168, 0.8)', border: 'rgba(61, 123, 168, 1)' },
+        { bg: 'rgba(80, 150, 209, 0.8)', border: 'rgba(80, 150, 209, 1)' },
+        { bg: 'rgba(132, 197, 244, 0.8)', border: 'rgba(132, 197, 244, 1)' }
+      ];
+      
+      const datasets = config.valueKeys.map((key, idx) => ({
+        label: formatLabel(key),
+        data: data.data.map(row => row[key]),
+        backgroundColor: colors[idx % colors.length].bg,
+        borderColor: colors[idx % colors.length].border,
+        borderWidth: 2,
+        borderRadius: 4,
+        maxBarThickness: 60
+      }));
+
+      // Formatear labels del eje X
+      const labels = data.data.map(row => {
+        const label = String(row[config.dataKey]);
+        // Acortar labels largos
+        return label.length > 20 ? label.substring(0, 17) + '...' : label;
+      });
+
+      // Limitar número de datos mostrados para mejor visualización
+      const maxDataPoints = 30;
+      let chartData = data.data;
+      let chartLabels = labels;
+      
+      if (data.data.length > maxDataPoints) {
+        // Mostrar solo top N resultados
+        chartData = data.data.slice(0, maxDataPoints);
+        chartLabels = labels.slice(0, maxDataPoints);
+      }
+
+      currentChart = new Chart(ctx, {
+        type: config.chartType === 'line' ? 'line' : 'bar',
+        data: {
+          labels: chartLabels,
+          datasets: config.valueKeys.map((key, idx) => ({
+            label: formatLabel(key),
+            data: chartData.map(row => row[key]),
+            backgroundColor: colors[idx % colors.length].bg,
+            borderColor: colors[idx % colors.length].border,
+            borderWidth: config.chartType === 'line' ? 3 : 2,
+            borderRadius: 4,
+            maxBarThickness: 60,
+            tension: 0.4, // Suavizar líneas
+            fill: config.chartType === 'line' ? false : true,
+            pointRadius: config.chartType === 'line' ? 4 : 0,
+            pointHoverRadius: config.chartType === 'line' ? 6 : 0
+          }))
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          },
+          plugins: {
+            legend: { 
+              display: true, 
+              position: 'top',
+              labels: {
+                padding: 15,
+                font: { size: 12, weight: '500' },
+                color: '#1a3a52',
+                usePointStyle: true,
+                pointStyle: 'circle'
+              }
+            },
+            tooltip: { 
+              enabled: true,
+              backgroundColor: 'rgba(26, 58, 82, 0.95)',
+              titleColor: '#fff',
+              bodyColor: '#fff',
+              borderColor: '#1a3a52',
+              borderWidth: 1,
+              padding: 12,
+              displayColors: true,
+              callbacks: {
+                label: function(context) {
+                  let label = context.dataset.label || '';
+                  if (label) {
+                    label += ': ';
+                  }
+                  // Formatear números grandes con comas
+                  label += formatNumber(context.parsed.y);
+                  return label;
+                }
+              }
+            },
+            title: {
+              display: false
+            }
+          },
+          scales: {
+            x: {
+              grid: {
+                display: false
+              },
+              ticks: {
+                color: '#64748b',
+                font: { size: 11 },
+                maxRotation: 45,
+                minRotation: 45,
+                autoSkip: true,
+                maxTicksLimit: 20
+              }
+            },
+            y: { 
+              beginAtZero: true,
+              grid: {
+                color: 'rgba(0, 0, 0, 0.05)',
+                drawBorder: false
+              },
+              ticks: {
+                color: '#64748b',
+                font: { size: 11 },
+                callback: function(value) {
+                  return formatNumber(value);
+                }
+              }
+            }
+          }
+        }
+      });
+      
+      // Mostrar mensaje si se limitaron los datos
+      if (data.data.length > maxDataPoints) {
+        const chartContainer = document.querySelector('.chart-container');
+        const notice = document.createElement('div');
+        notice.style.cssText = 'background: #f7f9fc; padding: 10px; border-radius: 4px; margin-top: 10px; font-size: 13px; color: #64748b; text-align: center;';
+        notice.innerHTML = `<i data-lucide="info" class="icon-sm" style="vertical-align: middle; margin-right: 6px;"></i>Showing top ${maxDataPoints} of ${data.data.length} results for better visualization`;
+        chartContainer.appendChild(notice);
+        lucide.createIcons(); // Reinicializar iconos
+      }
+    }
+
+    // Función para formatear labels
+    function formatLabel(str) {
+      return str
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, c => c.toUpperCase());
+    }
+
+    // Función para formatear números
+    function formatNumber(num) {
+      if (num === null || num === undefined) return '-';
+      
+      // Si es un número decimal pequeño
+      if (Math.abs(num) < 1 && num !== 0) {
+        return num.toFixed(2);
+      }
+      
+      // Si es un número grande, agregar comas
+      if (Math.abs(num) >= 1000) {
+        return num.toLocaleString('en-US', { 
+          maximumFractionDigits: 2,
+          minimumFractionDigits: 0 
+        });
+      }
+      
+      return num.toFixed(2);
+    }
+
+    function showLoading() {
+      hideEmpty();
+      const container = document.getElementById('results-container');
+      container.innerHTML = `
+        <div class="chart-container">
+          <div class="loading">
+            <div class="loading-spinner"></div>
+            <p><i data-lucide="cpu" class="icon-md" style="vertical-align: middle; margin-right: 8px;"></i>Processing your query with AI...</p>
+          </div>
+        </div>
+      `;
+      document.getElementById('queryBtn').disabled = true;
+      lucide.createIcons(); // Reinicializar iconos
+    }
+
+    function hideLoading() {
+      document.getElementById('queryBtn').disabled = false;
+    }
+
+    function showError(message) {
+      const container = document.getElementById('error-container');
+      container.innerHTML = `
+        <div class="error">
+          <i data-lucide="alert-circle" class="icon-sm" style="vertical-align: middle; margin-right: 8px;"></i>
+          <strong>Error:</strong> ${escapeHtml(message)}
+        </div>
+      `;
+      lucide.createIcons(); // Reinicializar iconos
+    }
+
+    function hideError() {
+      document.getElementById('error-container').innerHTML = '';
+    }
+
+    function hideEmpty() {
+      document.getElementById('empty-state').style.display = 'none';
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Soporte para Enter en textarea
+    document.getElementById('question').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && e.ctrlKey) {
+        handleQuery();
+      }
+    });
+
+    // Inicializar iconos Lucide
+    lucide.createIcons();
+
+    console.log('✅ Dashboard loaded successfully');
+    console.log('✅ API URL:', API_URL);
+  </script>
+</body>
+</html>
